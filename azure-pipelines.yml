@@ -14,45 +14,64 @@ variables:
 name: $(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION).$(Rev:r)
 
 stages:
-  - stage: ContinuousIntegration
-    displayName: 'Continous Integration'
-    pool: 'ubuntu-latest'
-    jobs:
-      - job: SetBuildNumber
-        displayName: 'Set build number'
-        tasks:
-          - checkout: none
-          
-          - task: PowerShell@2
-            displayName: Set build number
-            inputs:
-              targetType: 'inline'
-              script: |
-                $branchName = "$(Build.SourceBranchName)";
-                $buildTrigger = "$(Build.Reason)";
-                $buildVersion = "$(Build.BuildNumber)";
-                Write-Host "Branch name:    $branchName";
-                Write-Host "Build trigger:  $buildTrigger";
-                Write-Host "Build version:  $buildVersion";
-                if (-not($buildVersion.Contains($branchName) -or $buildVersion.Contains($buildTrigger))) {
-                  $nugetPkgVersion = $buildVersion;
-                  if (-not([string]::IsNullOrWhiteSpace($branchName)) -and ($branchName -ne "main")) {
-                    $nugetPkgVersion = "$nugetPkgVersion-$branchName";
-                  }
-                  Write-Host "Package version: $nugetPkgVersion";
-                  Write-Host "##vso[build.updateBuildNumber]$nugetPkgVersion";
-                } 
-                else {
-                  Write-Host "Package version: $buildVersion";
-                }
+- stage: ContinuousIntegration
+  displayName: 'Continous Integration'
+  pool: 'ubuntu-latest'
+  jobs:
+  - job: SetBuildNumber
+    displayName: 'Set build number'
+    steps:
+      - checkout: none
+      
+      - task: PowerShell@2
+        displayName: Set build number
+        inputs:
+          targetType: 'inline'
+          script: |
+            $branchName = "$(Build.SourceBranchName)";
+            $buildTrigger = "$(Build.Reason)";
+            $buildVersion = "$(Build.BuildNumber)";
+            Write-Host "Branch name:    $branchName";
+            Write-Host "Build trigger:  $buildTrigger";
+            Write-Host "Build version:  $buildVersion";
+            if (-not($buildVersion.Contains($branchName) -or $buildVersion.Contains($buildTrigger))) {
+              $nugetPkgVersion = $buildVersion;
+              if (-not([string]::IsNullOrWhiteSpace($branchName)) -and ($branchName -ne "main")) {
+                $nugetPkgVersion = "$nugetPkgVersion-$branchName";
+              }
+              Write-Host "Package version: $nugetPkgVersion";
+              Write-Host "##vso[build.updateBuildNumber]$nugetPkgVersion";
+            } 
+            else {
+              Write-Host "Package version: $buildVersion";
+            }
 
-      - job: ValidateTerraform
-        displayName: 'Validate terraform'
-        dependsOn: SetBuildNumber
-        tasks:
-          - task: TerraformInstaller@1
-            displayName: 'Install Terraform'
-            inputs:
-              terraformVersion: 'latest'
+  - job: ValidateTerraform
+    displayName: 'Validate terraform'
+    dependsOn: SetBuildNumber
+    steps:
+      - task: TerraformInstaller@1
+        displayName: 'Install Terraform'
+        inputs:
+          terraformVersion: 'latest'
+
+      - task: TerraformTaskV4@4
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(Build.SourcesDirectory)/src'
+          backendServiceArm: 'Free Trial(85e5b8d9-d15f-4db3-bfaf-c97182b7cc0b)'
+          backendAzureRmResourceGroupName: 'terraform-rg'
+          backendAzureRmStorageAccountName: 'tfstorageaccount12345'
+          backendAzureRmContainerName: 'tfstate'
+          backendAzureRmKey: 'container_apps_env.tfstate'
+
+      - task: TerraformTaskV4@4
+        displayName: 'Terraform validate'
+        inputs:
+          provider: 'azurerm'
+          command: 'validate'
+
+      
 
           
