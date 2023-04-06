@@ -1,0 +1,58 @@
+trigger:
+  branches:
+    include:
+      - '*'
+  paths:
+    include:
+      - '*'
+
+variables:
+  MAJOR_VERSION: 0
+  MINOR_VERSION: 0
+  PATCH_VERSION: 1
+
+name: $(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION).$(Rev:r)
+
+stages:
+  - stage: ContinuousIntegration
+    displayName: 'Continous Integration'
+    pool: 'ubuntu-latest'
+    jobs:
+      - job: SetBuildNumber
+        displayName: 'Set build number'
+        tasks:
+          - checkout: none
+          
+          - task: PowerShell@2
+            displayName: Set build number
+            inputs:
+              targetType: 'inline'
+              script: |
+                $branchName = "$(Build.SourceBranchName)";
+                $buildTrigger = "$(Build.Reason)";
+                $buildVersion = "$(Build.BuildNumber)";
+                Write-Host "Branch name:    $branchName";
+                Write-Host "Build trigger:  $buildTrigger";
+                Write-Host "Build version:  $buildVersion";
+                if (-not($buildVersion.Contains($branchName) -or $buildVersion.Contains($buildTrigger))) {
+                  $nugetPkgVersion = $buildVersion;
+                  if (-not([string]::IsNullOrWhiteSpace($branchName)) -and ($branchName -ne "main")) {
+                    $nugetPkgVersion = "$nugetPkgVersion-$branchName";
+                  }
+                  Write-Host "Package version: $nugetPkgVersion";
+                  Write-Host "##vso[build.updateBuildNumber]$nugetPkgVersion";
+                } 
+                else {
+                  Write-Host "Package version: $buildVersion";
+                }
+
+      - job: ValidateTerraform
+        displayName: 'Validate terraform'
+        dependsOn: SetBuildNumber
+        tasks:
+          - task: TerraformInstaller@1
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: 'latest'
+
+          
