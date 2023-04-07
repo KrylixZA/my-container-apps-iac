@@ -149,7 +149,7 @@ resource "azurerm_container_app" "daprdemoorderapi" {
       name   = "dapr-demo-order-api"
       image  = "daprcontainerappsregistry12345.azurecr.io/dapr-demo/order-api:latest"
       cpu    = 0.5
-      memory = "1.0Gi"
+      memory = "1Gi"
     }
   }
   dapr {
