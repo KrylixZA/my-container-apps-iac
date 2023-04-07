@@ -165,6 +165,8 @@ resource "azurerm_container_app" "daprdemoorderapi" {
     }
   }
   registry {
-    server = azurerm_container_registry.registry.name
+    server = azurerm_container_registry.registry.login_server
+    username = azurerm_container_registry.registry.admin_username
+    password_secret_name = azurerm_container_registry.registry.admin_password
   }
 }
