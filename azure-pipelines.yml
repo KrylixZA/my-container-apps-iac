@@ -16,7 +16,8 @@ name: $(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION).$(Rev:r)
 stages:
 - stage: ContinuousIntegration
   displayName: 'Continous Integration'
-  pool: 'ubuntu-latest'
+  pool: 
+    vmImage: 'ubuntu-latest'
   jobs:
   - job: SetBuildNumber
     displayName: 'Set build number'
