@@ -42,7 +42,7 @@ resource "azurerm_container_registry" "registry" {
   resource_group_name = azurerm_resource_group.environment.name
   location            = azurerm_resource_group.environment.location
   sku                 = "Basic"
-  admin_enabled       = false
+  admin_enabled       = true
 }
 
 resource "azurerm_servicebus_namespace" "servicebus" {
@@ -80,11 +80,11 @@ resource "azurerm_cosmosdb_sql_database" "cosmosdbsqldb" {
 }
 
 resource "azurerm_cosmosdb_sql_container" "cosmosdbsqlcontainer" {
-  name                  = "dapr-container-apps-cosmos-sql-db-container"
-  resource_group_name   = azurerm_resource_group.environment.name
-  account_name          = azurerm_cosmosdb_account.cosmosdb.name
-  database_name         = azurerm_cosmosdb_sql_database.cosmosdbsqldb.name
-  partition_key_path    = "/definition/id"
+  name                = "dapr-container-apps-cosmos-sql-db-container"
+  resource_group_name = azurerm_resource_group.environment.name
+  account_name        = azurerm_cosmosdb_account.cosmosdb.name
+  database_name       = azurerm_cosmosdb_sql_database.cosmosdbsqldb.name
+  partition_key_path  = "/definition/id"
 }
 
 resource "azurerm_log_analytics_workspace" "loganalytics" {
@@ -126,30 +126,39 @@ resource "azurerm_container_app_environment_dapr_component" "daprstatestorecompo
     value = azurerm_cosmosdb_account.cosmosdb.primary_key
   }
   metadata {
-    name = "database"
+    name  = "database"
     value = azurerm_cosmosdb_sql_database.cosmosdbsqldb.name
   }
   metadata {
-    name = "collection"
+    name  = "collection"
     value = azurerm_cosmosdb_sql_container.cosmosdbsqlcontainer.name
+  }
+  metadata {
+    name  = "actorStateStore"
+    value = true
   }
 }
 
-resource "azurerm_container_app" "helloworldcontainerapp" {
-  name                         = "hello-world-container-app"
+resource "azurerm_container_app" "daprdemoorderapi" {
+  name                         = "dapr-demo-order-api"
   container_app_environment_id = azurerm_container_app_environment.containerappenv.id
   resource_group_name          = azurerm_resource_group.environment.name
   revision_mode                = "Single"
   template {
     container {
-      name   = "examplecontainerapp"
-      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
-      cpu    = 0.25
-      memory = "0.5Gi"
+      name   = "dapr-demo-order-api"
+      image  = "daprcontainerappsregistry12345.azurecr.io/dapr-demo/order-api:latest"
+      cpu    = 0.5
+      memory = "1.0Gi"
     }
   }
+  dapr {
+    app_id       = "orderapi"
+    app_port     = 5000
+    app_protocol = "http"
+  }
   ingress {
-    target_port      = 80
+    target_port      = 5000
     external_enabled = true
     traffic_weight {
       percentage = 100
