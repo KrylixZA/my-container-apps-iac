@@ -147,7 +147,7 @@ resource "azurerm_container_app" "daprdemoorderapi" {
   template {
     container {
       name   = "dapr-demo-order-api"
-      image  = "daprcontainerappsregistry12345.azurecr.io/dapr-demo/order-api:latest"
+      image  = "dapr-demo/order-api:latest"
       cpu    = 0.5
       memory = "1Gi"
     }
@@ -163,5 +163,8 @@ resource "azurerm_container_app" "daprdemoorderapi" {
     traffic_weight {
       percentage = 100
     }
+  }
+  registry {
+    server = azurerm_container_registry.registry.name
   }
 }

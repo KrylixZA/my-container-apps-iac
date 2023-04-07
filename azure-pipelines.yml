@@ -48,7 +48,7 @@ stages:
           }
 
   - job: ValidateTerraform
-    displayName: 'Validate terraform'
+    displayName: 'Validate Terraform'
     dependsOn: SetBuildNumber
     steps:
     - task: TerraformInstaller@1
@@ -83,7 +83,7 @@ stages:
         environmentServiceNameAzureRM: 'Free Trial(85e5b8d9-d15f-4db3-bfaf-c97182b7cc0b)'
 
 - stage: ContinuousDeployment
-  displayName: 'Continuous deployment'
+  displayName: 'Continuous Deployment'
   dependsOn: ContinuousIntegration
   condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'main'))
   pool: 
