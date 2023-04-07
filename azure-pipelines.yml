@@ -22,66 +22,97 @@ stages:
   - job: SetBuildNumber
     displayName: 'Set build number'
     steps:
-      - checkout: none
-      
-      - task: PowerShell@2
-        displayName: Set build number
-        inputs:
-          targetType: 'inline'
-          script: |
-            $branchName = "$(Build.SourceBranchName)";
-            $buildTrigger = "$(Build.Reason)";
-            $buildVersion = "$(Build.BuildNumber)";
-            Write-Host "Branch name:    $branchName";
-            Write-Host "Build trigger:  $buildTrigger";
-            Write-Host "Build version:  $buildVersion";
-            if (-not($buildVersion.Contains($branchName) -or $buildVersion.Contains($buildTrigger))) {
-              $nugetPkgVersion = $buildVersion;
-              if (-not([string]::IsNullOrWhiteSpace($branchName)) -and ($branchName -ne "main")) {
-                $nugetPkgVersion = "$nugetPkgVersion-$branchName";
-              }
-              Write-Host "Package version: $nugetPkgVersion";
-              Write-Host "##vso[build.updateBuildNumber]$nugetPkgVersion";
-            } 
-            else {
-              Write-Host "Package version: $buildVersion";
+    - checkout: none
+    
+    - task: PowerShell@2
+      displayName: Set build number
+      inputs:
+        targetType: 'inline'
+        script: |
+          $branchName = "$(Build.SourceBranchName)";
+          $buildTrigger = "$(Build.Reason)";
+          $buildVersion = "$(Build.BuildNumber)";
+          Write-Host "Branch name:    $branchName";
+          Write-Host "Build trigger:  $buildTrigger";
+          Write-Host "Build version:  $buildVersion";
+          if (-not($buildVersion.Contains($branchName) -or $buildVersion.Contains($buildTrigger))) {
+            $nugetPkgVersion = $buildVersion;
+            if (-not([string]::IsNullOrWhiteSpace($branchName)) -and ($branchName -ne "main")) {
+              $nugetPkgVersion = "$nugetPkgVersion-$branchName";
             }
+            Write-Host "Package version: $nugetPkgVersion";
+            Write-Host "##vso[build.updateBuildNumber]$nugetPkgVersion";
+          } 
+          else {
+            Write-Host "Package version: $buildVersion";
+          }
 
   - job: ValidateTerraform
     displayName: 'Validate terraform'
     dependsOn: SetBuildNumber
     steps:
-      - task: TerraformInstaller@1
-        displayName: 'Install Terraform'
-        inputs:
-          terraformVersion: 'latest'
+    - task: TerraformInstaller@1
+      displayName: 'Install Terraform'
+      inputs:
+        terraformVersion: 'latest'
 
-      - task: TerraformTaskV4@4
-        displayName: 'Terraform init'
-        inputs:
-          provider: 'azurerm'
-          command: 'init'
-          workingDirectory: '$(Build.SourcesDirectory)/src'
-          backendServiceArm: 'Free Trial(85e5b8d9-d15f-4db3-bfaf-c97182b7cc0b)'
-          backendAzureRmResourceGroupName: 'terraform-rg'
-          backendAzureRmStorageAccountName: 'tfstorageaccount12345'
-          backendAzureRmContainerName: 'tfstate'
-          backendAzureRmKey: 'container_apps_env.tfstate'
+    - task: TerraformTaskV4@4
+      displayName: 'Terraform init'
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(Build.SourcesDirectory)/src'
+        backendServiceArm: 'Free Trial(85e5b8d9-d15f-4db3-bfaf-c97182b7cc0b)'
+        backendAzureRmResourceGroupName: 'terraform-rg'
+        backendAzureRmStorageAccountName: 'tfstorageaccount12345'
+        backendAzureRmContainerName: 'tfstate'
+        backendAzureRmKey: 'container_apps_env.tfstate'
 
-      - task: TerraformTaskV4@4
-        displayName: 'Terraform validate'
-        inputs:
-          provider: 'azurerm'
-          command: 'validate'
+    - task: TerraformTaskV4@4
+      displayName: 'Terraform validate'
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
 
-      - task: TerraformTaskV4@4
-        displayName: 'Terraform plan'
-        inputs:
-          provider: 'azurerm'
-          command: 'plan'
-          workingDirectory: '$(Build.SourcesDirectory)/src'
-          environmentServiceNameAzureRM: 'Free Trial(85e5b8d9-d15f-4db3-bfaf-c97182b7cc0b)'
+    - task: TerraformTaskV4@4
+      displayName: 'Terraform plan'
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        workingDirectory: '$(Build.SourcesDirectory)/src'
+        environmentServiceNameAzureRM: 'Free Trial(85e5b8d9-d15f-4db3-bfaf-c97182b7cc0b)'
 
-      
+- stage: ContinuousDeployment
+  displayName: 'Continuous deployment'
+  dependsOn: ContinuousIntegration
+  condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'main'))
+  pool: 
+    vmImage: 'ubuntu-latest'
+  jobs:
+  - job: ApplyTerraform
+    displayName: 'Apply Terraform'
+    steps:
+    - task: TerraformInstaller@1
+      displayName: 'Install Terraform'
+      inputs:
+        terraformVersion: 'latest'
 
-          
+    - task: TerraformTaskV4@4
+      displayName: 'Terraform init'
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(Build.SourcesDirectory)/src'
+        backendServiceArm: 'Free Trial(85e5b8d9-d15f-4db3-bfaf-c97182b7cc0b)'
+        backendAzureRmResourceGroupName: 'terraform-rg'
+        backendAzureRmStorageAccountName: 'tfstorageaccount12345'
+        backendAzureRmContainerName: 'tfstate'
+        backendAzureRmKey: 'container_apps_env.tfstate'
+
+    - task: TerraformTaskV4@4
+      displayName: 'Terraform apply'
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(Build.SourcesDirectory)/src'
+        environmentServiceNameAzureRM: 'Free Trial(85e5b8d9-d15f-4db3-bfaf-c97182b7cc0b)'
