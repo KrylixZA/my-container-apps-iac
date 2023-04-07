@@ -57,6 +57,7 @@ stages:
           terraformVersion: 'latest'
 
       - task: TerraformTaskV4@4
+        displayName: 'Terraform init'
         inputs:
           provider: 'azurerm'
           command: 'init'
@@ -72,6 +73,14 @@ stages:
         inputs:
           provider: 'azurerm'
           command: 'validate'
+
+      - task: TerraformTaskV4@4
+        displayName: 'Terraform plan'
+        inputs:
+          provider: 'azurerm'
+          command: 'plan'
+          workingDirectory: '$(Build.SourcesDirectory)/src'
+          environmentServiceNameAzureRM: 'Free Trial(85e5b8d9-d15f-4db3-bfaf-c97182b7cc0b)'
 
       
 
