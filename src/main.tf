@@ -188,3 +188,42 @@ resource "azurerm_container_app" "daprdemoorderapi" {
     value = azurerm_container_registry.registry.admin_password
   }
 }
+
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app
+resource "azurerm_container_app" "garbagecollector" {
+  name                         = "dapr-demo-garbage-collector"
+  container_app_environment_id = azurerm_container_app_environment.containerappenv.id
+  resource_group_name          = azurerm_resource_group.environment.name
+  revision_mode                = "Single"
+  template {
+    container {
+      name   = "dapr-demo-garbage-collector"
+      image  = "daprcontainerappsregistry12345.azurecr.io/dapr-demo/garbage-collector:latest"
+      cpu    = 0.5
+      memory = "1Gi"
+    }
+  }
+  dapr {
+    app_id       = "garbagecollector"
+    app_port     = 5000
+    app_protocol = "http"
+  }
+  # https://github.com/hashicorp/terraform-provider-azurerm/issues/20435#issuecomment-1443418097
+  ingress {
+    target_port      = 5000
+    external_enabled = true
+    traffic_weight {
+      percentage      = 100
+      latest_revision = true
+    }
+  }
+  registry {
+    server               = azurerm_container_registry.registry.login_server
+    username             = azurerm_container_registry.registry.admin_username
+    password_secret_name = "registry-password"
+  }
+  secret {
+    name  = "registry-password"
+    value = azurerm_container_registry.registry.admin_password
+  }
+}
