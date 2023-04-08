@@ -169,20 +169,22 @@ resource "azurerm_container_app" "daprdemoorderapi" {
     app_port     = 5000
     app_protocol = "http"
   }
+  # https://github.com/hashicorp/terraform-provider-azurerm/issues/20435#issuecomment-1443418097
   ingress {
     target_port      = 5000
     external_enabled = true
     traffic_weight {
-      percentage = 100
+      percentage      = 100
+      latest_revision = true
     }
   }
   registry {
-    server = azurerm_container_registry.registry.login_server
-    username = azurerm_container_registry.registry.admin_username
+    server               = azurerm_container_registry.registry.login_server
+    username             = azurerm_container_registry.registry.admin_username
     password_secret_name = "registry-password"
   }
   secret {
-    name = "registry-password"
+    name  = "registry-password"
     value = azurerm_container_registry.registry.admin_password
   }
 }
