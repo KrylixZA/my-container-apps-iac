@@ -164,8 +164,4 @@ resource "azurerm_container_app" "daprdemoorderapi" {
       percentage = 100
     }
   }
-  registry {
-    server = azurerm_container_registry.registry.login_server
-    identity = azurerm_container_registry.registry.admin_username
-  }
 }
