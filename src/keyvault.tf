@@ -1,6 +1,6 @@
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault
 resource "azurerm_key_vault" "keyvault" {
-  name                        = "dapr-container-apps-vault"
+  name                        = "daprcontainerappsvault"
   location                    = azurerm_resource_group.environment.location
   resource_group_name         = azurerm_resource_group.environment.name
   enabled_for_disk_encryption = true
