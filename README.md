@@ -1,4 +1,4 @@
-# my-container-apps-iac
+# Container Apps IaC
 
 [![Build Status](https://dev.azure.com/headleysj/Demos/_apis/build/status%2FKrylixZA.my-container-apps-iac?branchName=main)](https://dev.azure.com/headleysj/Demos/_build/latest?definitionId=16&branchName=main)
 
