@@ -87,7 +87,11 @@ resource "azurerm_container_app" "daprdemoorderapi" {
   registry {
     server               = azurerm_container_registry.registry.login_server
     username             = azurerm_container_registry.registry.admin_username
-    password_secret_name = azurerm_key_vault_secret.registrypasswordsecret.name
+    password_secret_name = "registry-password"
+  }
+  secret {
+    name  = "registry-password"
+    value = azurerm_key_vault_secret.registrypasswordsecret.value
   }
 }
 
@@ -122,6 +126,10 @@ resource "azurerm_container_app" "daprdemogarbagecollector" {
   registry {
     server               = azurerm_container_registry.registry.login_server
     username             = azurerm_container_registry.registry.admin_username
-    password_secret_name = azurerm_key_vault_secret.registrypasswordsecret.name
+    password_secret_name = "registry-password"
+  }
+  secret {
+    name  = "registry-password"
+    value = azurerm_key_vault_secret.registrypasswordsecret.value
   }
 }
