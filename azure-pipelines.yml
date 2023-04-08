@@ -82,8 +82,8 @@ stages:
         workingDirectory: '$(Build.SourcesDirectory)/src'
         environmentServiceNameAzureRM: 'Free Trial(85e5b8d9-d15f-4db3-bfaf-c97182b7cc0b)'
 
-- stage: ContinuousDeployment
-  displayName: 'Continuous Deployment'
+- stage: ContinuousDelivery
+  displayName: 'Continuous Delivery'
   dependsOn: ContinuousIntegration
   condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'main'))
   pool: 
